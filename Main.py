@@ -2,7 +2,10 @@ import pathlib
 import os
 import shutil
 
-def getListOfFilesMatchingVersion(file_paths, version):
+TRUE_RESPONSE_VALUES = ['y', 'yes', 'true', 't']
+
+
+def get_list_of_files_matching_version(file_paths, version):
     """
     Returns a list of files in the given path that contain the given version (or string).
 
@@ -15,17 +18,18 @@ def getListOfFilesMatchingVersion(file_paths, version):
     """
     results = {}
 
-    #For each file in the file paths check for version string
+    # For each file in the file paths check for version string
     for path in file_paths:
         file_name = os.path.basename(path)
         print(path)
         if version in file_name:
-            #If version is found then ew add it to the results dictionary key is without version and value is full path
+            # If version is found then ew add it to the results dictionary key is without version and value is full path
             found_file_name = str(file_name).replace(version, "")
             results[found_file_name] = path
     return results
 
-def getListOfFilesInDirectory(file_paths):
+
+def get_list_of_files_in_directory(file_paths):
     """
     Returns a list of files in the given path.
 
@@ -38,9 +42,11 @@ def getListOfFilesInDirectory(file_paths):
     
     return [file for file in file_paths.iterdir() if file.is_file()]
 
-def compareTwoListsForNewVersion(old_files, old_version, new_files, new_version, replace_old_files):
+
+def compare_two_lists_for_new_version(old_files, old_version, new_files, replace_old_files):
     """
-    Coppies files from the new files list as long as they are the same name as the ones in the old_filse list with only different versions
+    Copies files from the new files list as long as they are the same name as the ones in the old_files list with only
+    different versions
 
     Parameters:
     old_files (str): Files in the old directory to check for new versions of.
@@ -49,17 +55,18 @@ def compareTwoListsForNewVersion(old_files, old_version, new_files, new_version,
 
     new_version (str): Version of the files in the new directory.
 
-    replace_old_files (bool): Whether or not we delete the old version of the file in the folder if false the newer version is added to the directory and old version remains.
+    replace_old_files (bool): Whether we delete the old version of the file in the folder if false the newer version is
+    added to the directory and old version remains.
 
     Returns:
     none
     """
         
-    #Check that old files is a dictionary
+    # Check that old files is a dictionary
     if not isinstance(old_files, dict):
         raise ValueError("Old files must be a dictionary")
     
-    #Check that new files is a dictionary
+    # Check that new files is a dictionary
     if not isinstance(new_files, dict):
         raise ValueError("Old files must be a dictionary")
 
@@ -77,8 +84,8 @@ def compareTwoListsForNewVersion(old_files, old_version, new_files, new_version,
             replace = input(f"Replace {old_path} with {new_path}?\n")
             replace = replace.lower()
 
-            if replace == "y" or replace == "yes" or replace == "true" or replace == "t":
-                remove_old_file = False;
+            if replace in TRUE_RESPONSE_VALUES:
+                remove_old_file = False
 
                 # Ensure the file exists
                 if not os.path.isfile(old_path):
@@ -90,12 +97,13 @@ def compareTwoListsForNewVersion(old_files, old_version, new_files, new_version,
                     print(f"The source file {new_path} does not exist.")
                     continue
 
-                #If the old file name and the new file name are somehow the same we need to make sure that the user knows that the file will be overwritten reguardless of replace_old_files
-                if(old_file_name == new_file_name and not replace_old_files):
-                    sureReplace = input("Old and new file names are the same would you like to replace the files?\n")
-                    sureReplace = sureReplace.lower()
+                # If the old file name and the new file name are somehow the same we need to make sure that the user
+                # knows that the file will be overwritten regardless of replace_old_files
+                if old_file_name == new_file_name and not replace_old_files:
+                    sure_replace = input("Old and new file names are the same would you like to replace the files?\n")
+                    sure_replace = sure_replace.lower()
 
-                    if sureReplace != "y" and sureReplace != "yes" and sureReplace != "true" and sureReplace != "t":
+                    if sure_replace not in TRUE_RESPONSE_VALUES:
                         continue
                     else:
                         try:
@@ -107,12 +115,12 @@ def compareTwoListsForNewVersion(old_files, old_version, new_files, new_version,
                             continue
 
                 try:
-                    shutil.copy(old_path, old_directory +  "\\" + new_file_name)
+                    shutil.copy(old_path, old_directory + "\\" + new_file_name)
 
                     if replace_old_files:
                         os.remove(old_path)
 
-                    #If we saved a backup copy of the original file lets remove that copy
+                    # If we saved a backup copy of the original file lets remove that copy
                     if remove_old_file:
                         os.remove(old_path + "_old")
 
@@ -121,9 +129,9 @@ def compareTwoListsForNewVersion(old_files, old_version, new_files, new_version,
 
 
 if __name__ == "__main__":
-    #Get location of files in the old path
+    # Get location of files in the old path
     old_conforming_directory = pathlib.Path(input("What is the project directroy to update?\n"))
-    #Get location of files in the new path
+    # Get location of files in the new path
     new_conforming_directory = pathlib.Path(input("Where should we look for updated files?\n"))
     replace_old_files = input("Do you want to remove old files that are replaced?\n")
     old_version = input("What is the old version?\n")
@@ -131,20 +139,24 @@ if __name__ == "__main__":
 
     replace_old_files = replace_old_files.lower()
 
-    if replace_old_files == "y" or replace_old_files == "yes" or replace_old_files == "true" or replace_old_files == "t":
+    if replace_old_files in TRUE_RESPONSE_VALUES:
         replace_old_files = True
     else:
         replace_old_files = False
 
-    #Get list of files in the old path
-    old_files = getListOfFilesInDirectory(old_conforming_directory)
-    #Get list of files in the new path
-    new_files = getListOfFilesInDirectory(new_conforming_directory)
+    # Get list of files in the old path
+    old_files = get_list_of_files_in_directory(old_conforming_directory)
+    # Get list of files in the new path
+    new_files = get_list_of_files_in_directory(new_conforming_directory)
 
-    #Cross reference list of files with the version number
-    list_of_old_conforming_files = getListOfFilesMatchingVersion(old_files, old_version)
-    list_of_new_conforming_files = getListOfFilesMatchingVersion(new_files, new_version)
+    # Cross-reference list of files with the version number
+    list_of_old_conforming_files = get_list_of_files_matching_version(old_files, old_version)
+    list_of_new_conforming_files = get_list_of_files_matching_version(new_files, new_version)
 
-    #Compare the new and old lists to move and/or replace the old versions with the files in the new folder
-    compareTwoListsForNewVersion(list_of_old_conforming_files, old_version, list_of_new_conforming_files, new_version, replace_old_files)
-
+    # Compare the new and old lists to move and/or replace the old versions with the files in the new folder
+    compare_two_lists_for_new_version(
+        list_of_old_conforming_files,
+        old_version,
+        list_of_new_conforming_files,
+        replace_old_files
+    )
